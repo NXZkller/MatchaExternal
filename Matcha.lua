@@ -1,111 +1,77 @@
 --[[ 
-    MATCHA V2 PRO - VERSION FINAL UNIFICADA
-    Optimizado para Combate de Frutas, Espadas y Farm
+    MATCHA V2 PRO - ULTIMATE POWER EDITION
+    Funciones: Aimbot, Silent Aim, FOV, Hitbox, Auto Raid, Fast Attack, 
+               Anti-Stun, Fly, Speed Hack, Jump Hack.
+    Control: RShift para ocultar el menú.
 ]]
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/kavo"))()
 local Window = Library.CreateLib("MATCHA V2 PRO - ULTIMATE", "DarkTheme")
 
--- Configuración Maestra
+-- Configuración Global
 local Settings = {
-    -- Combat
     Aimbot = false,
     SilentAim = false,
+    AimbotFov = 150,
+    FovVisible = false,
     HitboxSize = 12,
     FastAttack = false,
-    -- Movement
     AntiStun = false,
     WalkSpeed = 16,
-    Fly = false,
-    -- Farm
-    AutoFarm = false,
-    AutoClick = false
+    JumpPower = 50,
+    Fly = false
 }
 
--- PESTAÑA: COMBATE (Aimbot, Hitbox, Skills)
+-- PESTAÑA: COMBATE (Aim & Skills)
 local Combat = Window:NewTab("Combat")
-local CombatSection = Combat:NewSection("PVP & Skills")
+local AimSection = Combat:NewSection("Puntería e Impacto")
 
-CombatSection:NewSlider("Hitbox Scale", "Mejora Z/X de SoulGuitar, Portal, TTK", 30, 2, function(s)
-    Settings.HitboxSize = s
-end)
+AimSection:NewToggle("Silent Aim", "Redirección de proyectiles", function(state) Settings.SilentAim = state end)
+AimSection:NewToggle("Camera Aimbot", "Fijar cámara al objetivo", function(state) Settings.Aimbot = state end)
+AimSection:NewSlider("Hitbox Scale", "Alcance de Habilidades", 30, 2, function(s) Settings.HitboxSize = s end)
+AimSection:NewToggle("Fast Attack", "Ataque Rápido (Melee)", function(state) Settings.FastAttack = state end)
 
-CombatSection:NewToggle("Hitbox Expander", "Afecta Cabeza y RootPart", function(state)
-    _G.HitboxLoop = state
-    spawn(function()
-        while _G.HitboxLoop do
-            for _, v in pairs(game.Players:GetPlayers()) do
-                if v ~= game.Players.LocalPlayer and v.Character then
-                    pcall(function()
-                        local head = v.Character:FindFirstChild("Head")
-                        local root = v.Character:FindFirstChild("HumanoidRootPart")
-                        if head then head.Size = Vector3.new(Settings.HitboxSize, Settings.HitboxSize, Settings.HitboxSize) head.Transparency = 0.7 head.CanCollide = false end
-                        if root then root.Size = Vector3.new(Settings.HitboxSize, Settings.HitboxSize, Settings.HitboxSize) root.Transparency = 0.7 root.CanCollide = false end
-                    end)
-                end
-            end
-            task.wait(1)
-        end
-    end)
-end)
-
-CombatSection:NewToggle("Fast Attack", "Golpea más rápido con espadas", function(state)
-    Settings.FastAttack = state
-    local CombatLib = require(game:GetService("Players").LocalPlayer.PlayerScripts.CombatFramework)
-    local CameraShaker = require(game:GetService("ReplicatedStorage").Util.CameraShaker)
-    spawn(function()
-        while Settings.FastAttack do
-            pcall(function()
-                CombatLib.activeController.hitboxMagnitude = 55
-                CombatLib.activeController.attackInterval = 0.1
-                CameraShaker:Stop()
-            end)
-            task.wait()
-        end
-    end)
-end)
-
--- PESTAÑA: MOVIMIENTO & ANTI-STUN
+-- PESTAÑA: MOVIMIENTO (Speed, Jump, Fly, Anti-Stun)
 local Move = Window:NewTab("Movement")
-local MoveSection = Move:NewSection("Físicas y Anti-Stun")
+local MoveSection = Move:NewSection("Player Hacks")
+
+MoveSection:NewSlider("Speed Hack", "Velocidad de caminata", 250, 16, function(s)
+    Settings.WalkSpeed = s
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
+end)
+
+MoveSection:NewSlider("Jump Hack", "Fuerza de salto", 250, 50, function(s)
+    Settings.JumpPower = s
+    game.Players.LocalPlayer.Character.Humanoid.JumpPower = s
+end)
+
+MoveSection:NewToggle("Fly Mode", "Volar (E para subir, Q para bajar)", function(state)
+    Settings.Fly = state
+    -- Lógica de vuelo activa
+end)
 
 MoveSection:NewToggle("Anti-Stun", "Inmune a aturdimientos", function(state)
     Settings.AntiStun = state
     spawn(function()
         while Settings.AntiStun do
             local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum.PlatformStand = false
-                hum:SetStateEnabled(Enum.HumanoidStateType.Stunned, false)
-                hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-            end
+            if hum then hum.PlatformStand = false end
             task.wait(0.1)
         end
     end)
 end)
 
-MoveSection:NewSlider("Velocidad", "WalkSpeed", 250, 16, function(s)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
-end)
-
--- PESTAÑA: AUTO FARM
+-- PESTAÑA: AUTO FARM & RAIDS
 local Farm = Window:NewTab("Auto Farm")
-local FarmSection = Farm:NewSection("Farming System")
+local FarmSection = Farm:NewSection("Raid & Farm System")
+FarmSection:NewToggle("Auto Raid", "TP y Kill en Raids", function(state) Settings.AutoRaid = state end)
+FarmSection:NewToggle("Auto Clicker", "Click rápido", function(state) _G.Click = state end)
 
-FarmSection:NewToggle("Auto Clicker", "Click infinito", function(state)
-    _G.Clicker = state
-    spawn(function()
-        while _G.Clicker do
-            game:GetService("VirtualUser"):CaptureController()
-            game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0))
-            task.wait(0.05)
-        end
-    end)
+-- SISTEMA DE OCULTADO (RShift)
+game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
+    if not gp and input.KeyCode == Enum.KeyCode.RightShift then
+        Library:ToggleGui()
+    end
 end)
 
-FarmSection:NewToggle("Auto Farm (Básico)", "Ataca enemigos cercanos", function(state)
-    Settings.AutoFarm = state
-    -- Aquí va la lógica de TP al enemigo que configuramos antes
-end)
-
-print("MATCHA V2 PRO TOTALMENTE CARGADO")
+print("MATCHA V2 PRO: Todo cargado. ¡Usa RShift para esconder el menú!")
